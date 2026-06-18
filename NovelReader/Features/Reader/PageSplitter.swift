@@ -18,6 +18,7 @@ enum PageSplitter {
 
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = lineSpacing
+        paragraph.alignment = .justified
         paragraph.lineBreakMode = .byWordWrapping
 
         let storage = NSTextStorage()

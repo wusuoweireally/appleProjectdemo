@@ -6,7 +6,7 @@ final class ReaderSettings: ObservableObject {
     @AppStorage("theme")        var theme: String = ReadingTheme.paper.rawValue
     @AppStorage("fontSize")     var fontSize: Double = 18
     @AppStorage("lineSpacing")  var lineSpacing: Double = 10
-    @AppStorage("seamlessScroll") var seamlessScroll = false
+    @AppStorage("seamlessScroll") var seamlessScroll = true
 
     var readingTheme: ReadingTheme {
         get { ReadingTheme(rawValue: theme) ?? .paper }
@@ -19,6 +19,22 @@ final class ReaderSettings: ObservableObject {
 
     func setLastChapter(_ chapter: Int, for bookId: String) {
         UserDefaults.standard.set(chapter, forKey: "lastChapter_\(bookId)")
+    }
+
+    func lastPage(for bookId: String, chapter: Int) -> Int {
+        UserDefaults.standard.integer(forKey: "lastPage_\(bookId)_\(chapter)")
+    }
+
+    func setLastPage(_ page: Int, for bookId: String, chapter: Int) {
+        UserDefaults.standard.set(page, forKey: "lastPage_\(bookId)_\(chapter)")
+    }
+
+    func lastScrollBlock(for bookId: String, chapter: Int) -> Int {
+        UserDefaults.standard.integer(forKey: "lastScrollBlock_\(bookId)_\(chapter)")
+    }
+
+    func setLastScrollBlock(_ block: Int, for bookId: String, chapter: Int) {
+        UserDefaults.standard.set(max(0, block), forKey: "lastScrollBlock_\(bookId)_\(chapter)")
     }
 }
 

@@ -11,6 +11,8 @@ struct ReaderSettingsSheet: View {
     @AppStorage("nameFrom") private var nameFrom = "陈晓"
     @AppStorage("nameTo")   private var nameTo = ""
 
+    @State private var localLineSpacing: Double = 10
+
     private var theme: ReadingTheme { settings.readingTheme }
 
     var body: some View {
@@ -42,9 +44,11 @@ struct ReaderSettingsSheet: View {
                     HStack {
                         Text("行距")
                         Spacer()
-                        Text("\(Int(settings.lineSpacing))").foregroundStyle(.secondary)
+                        Text("\(Int(localLineSpacing))").foregroundStyle(.secondary)
                     }
-                    Slider(value: $settings.lineSpacing, in: 4...24, step: 1)
+                    Slider(value: $localLineSpacing, in: 4...24, step: 1) { editing in
+                        if !editing { settings.lineSpacing = localLineSpacing }
+                    }
                         .tint(Color(hex: 0xFC5B26))
                 }
 
@@ -59,6 +63,7 @@ struct ReaderSettingsSheet: View {
                     Text("将全书该名字替换为新名，「替换为」留空则不替换。")
                 }
             }
+            .onAppear { localLineSpacing = settings.lineSpacing }
             .navigationTitle("阅读设置")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

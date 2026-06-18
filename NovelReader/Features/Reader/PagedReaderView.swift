@@ -19,6 +19,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
     let pageTurnToken: Int
     let onPrevChapter: () -> Void
     let onNextChapter: () -> Void
+    let onPageChanged: (Int) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -48,6 +49,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
         var parent: PagedReaderView!
         var lastSignature: String = ""
         var lastPageTurnToken: Int = 0
+        var lastReportedPage: Int = -1
 
         func apply(to pvc: UIPageViewController, force: Bool) {
             guard force || lastSignature != parent.signature else { return }
@@ -56,6 +58,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
             if let vc = pageController(for: idx) {
                 pvc.setViewControllers([vc], direction: .forward, animated: false)
             }
+            reportPage(idx)
         }
 
         func handlePageTurnIfNeeded(token: Int, in pvc: UIPageViewController) {
@@ -68,6 +71,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
             if isNext {
                 if current < parent.pages.count - 1, let vc = pageController(for: current + 1) {
                     pvc.setViewControllers([vc], direction: .forward, animated: true)
+                    reportPage(current + 1)
                 } else if let page = parent.nextFirstPage {
                     let vc = boundaryController(tag: -2, title: parent.nextChapterTitle, text: page)
                     pvc.setViewControllers([vc], direction: .forward, animated: true)
@@ -76,6 +80,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
             } else {
                 if current > 0, let vc = pageController(for: current - 1) {
                     pvc.setViewControllers([vc], direction: .reverse, animated: true)
+                    reportPage(current - 1)
                 } else if let page = parent.prevLastPage {
                     let vc = boundaryController(tag: -1, title: parent.prevChapterTitle, text: page)
                     pvc.setViewControllers([vc], direction: .reverse, animated: true)
@@ -112,6 +117,7 @@ struct PagedReaderView: UIViewControllerRepresentable {
             let tag = pvc.viewControllers?.first?.view.tag ?? -1
             if tag == -1 { DispatchQueue.main.async { self.parent.onPrevChapter() } }
             if tag == -2 { DispatchQueue.main.async { self.parent.onNextChapter() } }
+            if tag >= 0 { reportPage(tag) }
         }
 
         // MARK: Helpers
@@ -119,6 +125,12 @@ struct PagedReaderView: UIViewControllerRepresentable {
         private func pageController(for index: Int) -> UIViewController? {
             guard parent.pages.indices.contains(index) else { return nil }
             return controller(tag: index, title: parent.chapterTitle, text: parent.pages[index])
+        }
+
+        private func reportPage(_ index: Int) {
+            guard index != lastReportedPage else { return }
+            lastReportedPage = index
+            parent.onPageChanged(index)
         }
 
         private func boundaryController(tag: Int, title: String, text: String) -> UIViewController {
@@ -180,7 +192,7 @@ private struct PageContent: View {
 
 /// 使用 TextKit（UILabel, TextKit 1）渲染正文，与 PageSplitter 的布局完全一致，
 /// 确保翻页时文本首尾衔接。
-private struct TextKitPageTextView: UIViewRepresentable {
+struct TextKitPageTextView: UIViewRepresentable {
     let text: String
     let font: UIFont
     let lineSpacing: CGFloat
@@ -195,6 +207,7 @@ private struct TextKitPageTextView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UILabel, context: Context) {
         let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .justified
         paragraph.lineSpacing = lineSpacing
         paragraph.lineBreakMode = .byWordWrapping
         uiView.attributedText = NSAttributedString(string: text, attributes: [

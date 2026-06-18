@@ -41,6 +41,8 @@ struct ProfileView: View {
                 Section {
                     Button(role: .destructive) {
                         settings.setLastChapter(0, for: bookId)
+                        settings.setLastPage(0, for: bookId, chapter: 0)
+                        settings.setLastScrollBlock(0, for: bookId, chapter: 0)
                         bookStore.updateProgress(for: bookId, chapter: 0)
                         showToast("已清除阅读进度")
                     } label: {

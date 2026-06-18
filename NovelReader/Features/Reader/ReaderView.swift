@@ -1,12 +1,47 @@
 import SwiftUI
 import UIKit
 
+private struct ScrollAnchor: Hashable {
+    let chapter: Int
+    let block: Int
+}
+
+private struct ScrollBlock: Identifiable {
+    let id: ScrollAnchor
+    let text: String
+}
+
+private struct ScrollAnchorOffset: Equatable {
+    let anchor: ScrollAnchor
+    let minY: CGFloat
+}
+
+private struct ScrollAnchorPreferenceKey: PreferenceKey {
+    static var defaultValue: [ScrollAnchorOffset] = []
+
+    static func reduce(value: inout [ScrollAnchorOffset], nextValue: () -> [ScrollAnchorOffset]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+private struct ScrollJump: Equatable {
+    let anchor: ScrollAnchor
+    let animated: Bool
+    let token: Int
+}
+
+private enum ChapterLanding {
+    case top
+    case saved
+    case end
+}
+
 /// 小说阅读主体。
 ///
 /// 交互要点：
 /// - 两种翻页方式：上下滚动 / 左右翻页（设置里切换）。
-/// - 文字区可长按选词复制（textSelection）。
-/// - 左右各 56pt 边缘为翻章热区；中间大片区域单击切换工具栏。
+/// - 正文两端对齐（justified），左右边距一致。
+/// - 左右翻页模式下，左右各 56pt 边缘为翻页热区；滚动模式只响应正文滚动。
 /// - 工具栏（顶栏 + 底栏 + 章节滑块）通过 safeAreaInset 插入，
 ///   显示时滚动模式自动避让，隐藏时全屏沉浸。
 /// - 章节切换在同一个视图内完成（@State currentIndex），不向导航栈 push，
@@ -25,11 +60,12 @@ struct ReaderView: View {
     @State private var showCatalog = false
     @State private var showSettings = false
     @State private var hideTask: Task<Void, Never>?
-    @State private var scrollToTopToken = 0
-    @State private var seamlessTopID: Int?
-    @State private var seamlessJumpTarget: Int?
-    @State private var pendingTopID: Int?
-    @State private var isNavigatingViaJump = false
+    @State private var visibleScrollAnchor: ScrollAnchor?
+    @State private var pendingScrollAnchor: ScrollAnchor?
+    @State private var scrollJump: ScrollJump?
+    @State private var scrollJumpToken = 0
+    @State private var activeScrollJumpToken = 0
+    @State private var isProgrammaticScroll = false
 
     @State private var brightnessOverride: Double?
     @State private var systemBrightnessOnEnter: Double = 0.6
@@ -37,6 +73,7 @@ struct ReaderView: View {
     // 翻页模式专用
     @State private var pagedPages: [String] = []
     @State private var pagedTargetPage: Int = 0
+    @State private var pagedCurrentPage: Int = 0
     @State private var pageSize: CGSize = .zero
     @State private var lastSplitChapterId: Int = -1
     @State private var pageTurnToken = 0
@@ -44,27 +81,36 @@ struct ReaderView: View {
     @State private var prevLastPage: String?
     @State private var nextChapterTitle = ""
     @State private var nextFirstPage: String?
+    @State private var chapterSliderValue: Double = 0
+    @State private var isChapterSliderEditing = false
 
     private let autoHideDelay: TimeInterval = 6
+    private let scrollSpaceName = "reader-scroll-space"
     private var theme: ReadingTheme { settings.readingTheme }
 
     var body: some View {
         ZStack {
             theme.background.ignoresSafeArea()
 
-            if pageMode == "paged", let chapter = vm.currentChapter {
-                pagedReader(chapter: chapter)
+            if pageMode == "paged" {
+                if vm.loadState == .loaded, let chapter = vm.currentChapter {
+                    pagedReader(chapter: chapter)
+                } else {
+                    Color.clear
+                }
             } else {
                 scrollReader
             }
 
-            tapZones
+            if vm.loadState != .loaded || (pageMode == "paged" && !pagedContentReady) { statusOverlay }
+
+            if pageMode == "paged", vm.loadState == .loaded, pagedContentReady, !chromeVisible { tapZones }
         }
         .safeAreaInset(edge: .top, spacing: 0) { if chromeVisible { topBar } }
         .safeAreaInset(edge: .bottom, spacing: 0) { if chromeVisible { bottomBar } }
-        .preferredColorScheme(theme.colorScheme)
         .statusBarHidden(!chromeVisible)
         .toolbar(.hidden, for: .navigationBar, .tabBar)
+        .background(SwipeBackEnabler())
         .task { await enterReader() }
         .onDisappear { leaveReader() }
         .sheet(isPresented: $showCatalog) {
@@ -72,10 +118,7 @@ struct ReaderView: View {
                 chapters: vm.chapters,
                 currentIndex: vm.currentIndex,
                 onJump: { idx in
-                    vm.jump(to: idx)
-                    settings.setLastChapter(idx, for: bookStore.currentBook?.id ?? "")
-                    pagedTargetPage = 0
-                    if settings.seamlessScroll { seamlessJumpTarget = idx }
+                    jump(to: idx, landing: .top, animated: false)
                 }
             )
             .environmentObject(settings)
@@ -91,6 +134,8 @@ struct ReaderView: View {
             guard pageMode == "paged", let chapter = vm.currentChapter else { return }
             await splitCurrentChapter(chapter, size: pageSize)
         }
+        .onChange(of: pageMode) { _ in restoreReadingPosition(animated: false) }
+        .onChange(of: settings.seamlessScroll) { _ in restoreReadingPosition(animated: false) }
     }
 
     // MARK: - Scroll mode
@@ -99,40 +144,37 @@ struct ReaderView: View {
     private var scrollReader: some View {
         if settings.seamlessScroll {
             seamlessScrollReader
+        } else if let chapter = vm.currentChapter {
+            chapterScrollReader(index: vm.currentIndex, chapter: chapter)
         } else {
-            chapterScrollReader
+            Color.clear
         }
     }
 
     @ViewBuilder
-    private var chapterScrollReader: some View {
+    private func chapterScrollReader(index: Int, chapter: Chapter) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    Text(vm.currentChapter?.title ?? "")
-                        .font(.system(size: settings.fontSize + 6, weight: .bold))
-                        .foregroundColor(theme.text)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, 22)
-                        .id("top")
-
-                    Text(bodyText)
-                        .font(.system(size: settings.fontSize))
-                        .foregroundColor(theme.text)
-                        .lineSpacing(settings.lineSpacing)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
+                    scrollChapterTitle(index: index, title: chapter.title)
+                    scrollChapterBlocks(index: index, chapter: chapter)
                     chapterFooter
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 56)
                 .padding(.bottom, 120)
             }
+            .scrollIndicators(.hidden)
+            .coordinateSpace(name: scrollSpaceName)
             .onTapGesture { toggleChrome() }
-            .onChange(of: vm.currentIndex) { _ in bumpScrollToTop() }
-            .onChange(of: scrollToTopToken) { _ in
-                withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("top", anchor: .top) }
+            .onPreferenceChange(ScrollAnchorPreferenceKey.self) { handleScrollOffsets($0) }
+            .task(id: pendingScrollAnchor) {
+                await commitPendingScrollAnchor()
+            }
+            .task(id: scrollJump?.token) {
+                guard let jump = scrollJump else { return }
+                try? await Task.sleep(nanoseconds: 20_000_000)
+                performScrollJump(jump, proxy: proxy)
             }
         }
     }
@@ -143,56 +185,26 @@ struct ReaderView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(vm.chapters.enumerated()), id: \.element.id) { index, chapter in
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(chapter.title)
-                                .font(.system(size: settings.fontSize + 6, weight: .bold))
-                                .foregroundColor(theme.text)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.bottom, 22)
-                                .id(index)
-
-                            Text(replacedNames(chapter.content))
-                                .font(.system(size: settings.fontSize))
-                                .foregroundColor(theme.text)
-                                .lineSpacing(settings.lineSpacing)
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(.bottom, 40)
+                        scrollChapterTitle(index: index, title: chapter.title)
+                        scrollChapterBlocks(index: index, chapter: chapter)
+                        Color.clear.frame(height: 40)
                     }
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 56)
                 .padding(.bottom, 120)
             }
-            .scrollPosition(id: $seamlessTopID)
+            .scrollIndicators(.hidden)
+            .coordinateSpace(name: scrollSpaceName)
             .onTapGesture { toggleChrome() }
-            .onChange(of: seamlessTopID) { newID in
-                guard !isNavigatingViaJump else { return }
-                pendingTopID = newID
+            .onPreferenceChange(ScrollAnchorPreferenceKey.self) { handleScrollOffsets($0) }
+            .task(id: pendingScrollAnchor) {
+                await commitPendingScrollAnchor()
             }
-            .task(id: pendingTopID) {
-                guard let idx = pendingTopID, idx != vm.currentIndex else { return }
-                try? await Task.sleep(nanoseconds: 200_000_000)
-                guard pendingTopID == idx else { return }
-                vm.jump(to: idx)
-                settings.setLastChapter(idx, for: bookStore.currentBook?.id ?? "")
-            }
-            .onChange(of: seamlessJumpTarget) { target in
-                guard let idx = target else { return }
-                isNavigatingViaJump = true
-                vm.jump(to: idx)
-                settings.setLastChapter(idx, for: bookStore.currentBook?.id ?? "")
-                proxy.scrollTo(idx, anchor: .top)
-                seamlessJumpTarget = nil
-                Task {
-                    try? await Task.sleep(nanoseconds: 500_000_000)
-                    isNavigatingViaJump = false
-                }
-            }
-            .task {
-                try? await Task.sleep(nanoseconds: 100_000_000)
-                seamlessJumpTarget = vm.currentIndex
+            .task(id: scrollJump?.token) {
+                guard let jump = scrollJump else { return }
+                try? await Task.sleep(nanoseconds: 20_000_000)
+                performScrollJump(jump, proxy: proxy)
             }
         }
     }
@@ -202,23 +214,30 @@ struct ReaderView: View {
     @ViewBuilder
     private func pagedReader(chapter: Chapter) -> some View {
         GeometryReader { geo in
-            PagedReaderView(
-                chapterId: chapter.id,
-                chapterTitle: chapter.title,
-                pages: pagedPages,
-                targetPageIndex: pagedTargetPage,
-                prevLastPage: prevLastPage,
-                prevChapterTitle: prevChapterTitle,
-                nextFirstPage: nextFirstPage,
-                nextChapterTitle: nextChapterTitle,
-                theme: theme,
-                fontSize: settings.fontSize,
-                lineSpacing: settings.lineSpacing,
-                onTapCenter: toggleChrome,
-                pageTurnToken: pageTurnToken,
-                onPrevChapter: { prev() },
-                onNextChapter: { next() }
-            )
+            Group {
+                if !pagedPages.isEmpty, lastSplitChapterId == chapter.id {
+                    PagedReaderView(
+                        chapterId: chapter.id,
+                        chapterTitle: chapter.title,
+                        pages: pagedPages,
+                        targetPageIndex: pagedTargetPage,
+                        prevLastPage: prevLastPage,
+                        prevChapterTitle: prevChapterTitle,
+                        nextFirstPage: nextFirstPage,
+                        nextChapterTitle: nextChapterTitle,
+                        theme: theme,
+                        fontSize: settings.fontSize,
+                        lineSpacing: settings.lineSpacing,
+                        onTapCenter: toggleChrome,
+                        pageTurnToken: pageTurnToken,
+                        onPrevChapter: { prev() },
+                        onNextChapter: { next() },
+                        onPageChanged: { recordPagedPage($0) }
+                    )
+                } else {
+                    Color.clear
+                }
+            }
             .onAppear { if pageSize != geo.size { pageSize = geo.size } }
             .onChange(of: geo.size) { if pageSize != $0 { pageSize = $0 } }
         }
@@ -227,12 +246,82 @@ struct ReaderView: View {
 
     // MARK: - Body pieces
 
-    private var bodyText: String {
-        switch vm.loadState {
-        case .loading, .idle: return "正在加载…"
-        case .failed(let m):  return m
-        case .loaded:         return replacedNames(vm.currentChapter?.content ?? "")
+    /// 加载/失败时的居中提示，避免夜间主题下黑屏。
+    @ViewBuilder
+    private var statusOverlay: some View {
+        VStack(spacing: 12) {
+            if case .failed(let msg) = vm.loadState {
+                Text(msg).font(.subheadline)
+            } else {
+                ProgressView()
+                Text("正在加载…").font(.subheadline)
+            }
         }
+        .foregroundColor(.primary)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var pagedContentReady: Bool {
+        guard pageMode == "paged", let chapter = vm.currentChapter else { return false }
+        return !pagedPages.isEmpty && lastSplitChapterId == chapter.id
+    }
+
+    private func scrollChapterTitle(index: Int, title: String) -> some View {
+        let anchor = ScrollAnchor(chapter: index, block: 0)
+        return Text(title)
+            .font(.system(size: settings.fontSize + 6, weight: .bold))
+            .foregroundColor(theme.text)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 22)
+            .id(anchor)
+            .background(scrollAnchorReader(anchor))
+    }
+
+    private func scrollChapterBlocks(index: Int, chapter: Chapter) -> some View {
+        VStack(alignment: .leading, spacing: settings.lineSpacing) {
+            ForEach(scrollBlocks(for: chapter, index: index)) { block in
+                scrollBlock(block)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func scrollBlock(_ block: ScrollBlock) -> some View {
+        if block.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            Color.clear
+                .frame(height: max(8, settings.fontSize * 0.6))
+                .id(block.id)
+                .background(scrollAnchorReader(block.id))
+        } else {
+            TextKitPageTextView(
+                text: block.text,
+                font: UIFont.systemFont(ofSize: settings.fontSize),
+                lineSpacing: settings.lineSpacing,
+                textColor: UIColor(theme.text)
+            )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .id(block.id)
+                .background(scrollAnchorReader(block.id))
+        }
+    }
+
+    private func scrollAnchorReader(_ anchor: ScrollAnchor) -> some View {
+        GeometryReader { geo in
+            Color.clear.preference(
+                key: ScrollAnchorPreferenceKey.self,
+                value: [ScrollAnchorOffset(anchor: anchor, minY: geo.frame(in: .named(scrollSpaceName)).minY)]
+            )
+        }
+    }
+
+    private func scrollBlocks(for chapter: Chapter, index: Int) -> [ScrollBlock] {
+        replacedNames(chapter.content)
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .components(separatedBy: "\n")
+            .enumerated()
+            .map { offset, text in
+                ScrollBlock(id: ScrollAnchor(chapter: index, block: offset + 1), text: text)
+            }
     }
 
     private var chapterFooter: some View {
@@ -253,37 +342,21 @@ struct ReaderView: View {
         .padding(.top, 60)
     }
 
-    /// 左右窄边：翻页模式 → 翻页；无缝滚动 → 跳到上/下章开头；普通滚动 → 翻章。
+    /// 左右窄边只服务左右翻页模式；上下滚动模式不响应边缘切章。
     private var tapZones: some View {
         HStack(spacing: 0) {
             Color.clear.contentShape(Rectangle())
                 .frame(width: 56)
                 .onTapGesture {
-                    if pageMode == "paged" {
-                        pageTurnToken -= 1
-                        rescheduleAutoHide()
-                    } else if settings.seamlessScroll {
-                        let target = max(0, vm.currentIndex - 1)
-                        seamlessJumpTarget = target
-                        rescheduleAutoHide()
-                    } else {
-                        prev()
-                    }
+                    pageTurnToken -= 1
+                    rescheduleAutoHide()
                 }
             Spacer(minLength: 0)
             Color.clear.contentShape(Rectangle())
                 .frame(width: 56)
                 .onTapGesture {
-                    if pageMode == "paged" {
-                        pageTurnToken += 1
-                        rescheduleAutoHide()
-                    } else if settings.seamlessScroll {
-                        let target = min(vm.total - 1, vm.currentIndex + 1)
-                        seamlessJumpTarget = target
-                        rescheduleAutoHide()
-                    } else {
-                        next()
-                    }
+                    pageTurnToken += 1
+                    rescheduleAutoHide()
                 }
         }
     }
@@ -310,18 +383,31 @@ struct ReaderView: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 0) {
+        let maxIndex = max(vm.total - 1, 0)
+        let sliderMax = Double(max(maxIndex, 1))
+        let sliderIndex = min(max(Int((isChapterSliderEditing ? chapterSliderValue : Double(vm.currentIndex)).rounded()), 0), maxIndex)
+
+        return VStack(spacing: 0) {
             VStack(spacing: 6) {
                 HStack(spacing: 14) {
                     chromeIcon("chevron.backward", disabled: !vm.canPrev) { prev() }
                     Slider(value: Binding(
-                        get: { Double(vm.currentIndex) },
-                        set: { vm.jump(to: Int($0.rounded())) }
-                    ), in: 0...Double(max(vm.total - 1, 1)))
+                        get: { isChapterSliderEditing ? chapterSliderValue : Double(vm.currentIndex) },
+                        set: { chapterSliderValue = min(max($0, 0), sliderMax) }
+                    ), in: 0...sliderMax, step: 1, onEditingChanged: { editing in
+                        if editing {
+                            chapterSliderValue = Double(vm.currentIndex)
+                            isChapterSliderEditing = true
+                        } else {
+                            isChapterSliderEditing = false
+                            let target = min(max(Int(chapterSliderValue.rounded()), 0), maxIndex)
+                            jump(to: target, landing: .top, animated: false)
+                        }
+                    })
                     .tint(Color(hex: 0xFC5B26))
                     chromeIcon("chevron.forward", disabled: !vm.canNext) { next() }
                 }
-                Text("\(vm.currentIndex + 1) / \(vm.total)")
+                Text("\(sliderIndex + 1) / \(max(vm.total, 1))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -377,18 +463,12 @@ struct ReaderView: View {
 
     private func prev() {
         guard vm.canPrev else { return }
-        vm.move(-1)
-        settings.setLastChapter(vm.currentIndex, for: bookStore.currentBook?.id ?? "")
-        pagedTargetPage = -1
-        rescheduleAutoHide()
+        jump(to: vm.currentIndex - 1, landing: pageMode == "paged" ? .end : .top, animated: true)
     }
 
     private func next() {
         guard vm.canNext else { return }
-        vm.move(1)
-        settings.setLastChapter(vm.currentIndex, for: bookStore.currentBook?.id ?? "")
-        pagedTargetPage = 0
-        rescheduleAutoHide()
+        jump(to: vm.currentIndex + 1, landing: .top, animated: true)
     }
 
     private func toggleTheme() {
@@ -396,7 +476,146 @@ struct ReaderView: View {
         rescheduleAutoHide()
     }
 
-    private func bumpScrollToTop() { scrollToTopToken &+= 1 }
+    private func jump(to index: Int, landing: ChapterLanding, animated: Bool) {
+        guard vm.chapters.indices.contains(index) else { return }
+        saveCurrentPosition()
+        vm.jump(to: index)
+        recordChapter(index)
+
+        if pageMode == "paged" {
+            pagedTargetPage = pageTarget(for: index, landing: landing)
+        } else {
+            requestScroll(to: scrollAnchor(for: index, landing: landing), animated: animated)
+        }
+        rescheduleAutoHide()
+    }
+
+    private func pageTarget(for index: Int, landing: ChapterLanding) -> Int {
+        guard let bookId = bookStore.currentBook?.id else { return 0 }
+        switch landing {
+        case .top: return 0
+        case .saved: return settings.lastPage(for: bookId, chapter: index)
+        case .end: return -1
+        }
+    }
+
+    private func scrollAnchor(for index: Int, landing: ChapterLanding) -> ScrollAnchor {
+        guard let bookId = bookStore.currentBook?.id else {
+            return ScrollAnchor(chapter: index, block: 0)
+        }
+        switch landing {
+        case .top:
+            return ScrollAnchor(chapter: index, block: 0)
+        case .saved:
+            let saved = settings.lastScrollBlock(for: bookId, chapter: index)
+            return ScrollAnchor(chapter: index, block: min(saved, lastBlockIndex(for: index)))
+        case .end:
+            return ScrollAnchor(chapter: index, block: lastBlockIndex(for: index))
+        }
+    }
+
+    private func lastBlockIndex(for index: Int) -> Int {
+        guard vm.chapters.indices.contains(index) else { return 0 }
+        let text = replacedNames(vm.chapters[index].content).replacingOccurrences(of: "\r\n", with: "\n")
+        return max(0, text.components(separatedBy: "\n").count)
+    }
+
+    private func requestScroll(to anchor: ScrollAnchor, animated: Bool) {
+        scrollJumpToken &+= 1
+        pendingScrollAnchor = nil
+        isProgrammaticScroll = true
+        visibleScrollAnchor = anchor
+        scrollJump = ScrollJump(anchor: anchor, animated: animated, token: scrollJumpToken)
+        recordScrollAnchor(anchor)
+        let token = scrollJumpToken
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            if scrollJumpToken == token { isProgrammaticScroll = false }
+        }
+    }
+
+    private func performScrollJump(_ jump: ScrollJump, proxy: ScrollViewProxy) {
+        activeScrollJumpToken = jump.token
+        isProgrammaticScroll = true
+        if jump.animated {
+            withAnimation(.easeOut(duration: 0.22)) {
+                proxy.scrollTo(jump.anchor, anchor: .top)
+            }
+        } else {
+            proxy.scrollTo(jump.anchor, anchor: .top)
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 320_000_000)
+            if activeScrollJumpToken == jump.token { isProgrammaticScroll = false }
+        }
+    }
+
+    private func handleScrollOffsets(_ offsets: [ScrollAnchorOffset]) {
+        guard !isProgrammaticScroll, !offsets.isEmpty else { return }
+        let visibleTop: CGFloat = 72
+        let anchor = offsets
+            .filter { $0.minY <= visibleTop }
+            .max { $0.minY < $1.minY }?
+            .anchor
+            ?? offsets.min { abs($0.minY - visibleTop) < abs($1.minY - visibleTop) }?.anchor
+
+        guard let anchor, vm.chapters.indices.contains(anchor.chapter), anchor != visibleScrollAnchor else { return }
+        visibleScrollAnchor = anchor
+        pendingScrollAnchor = anchor
+    }
+
+    private func commitPendingScrollAnchor() async {
+        guard let anchor = pendingScrollAnchor else { return }
+        try? await Task.sleep(nanoseconds: 180_000_000)
+        guard pendingScrollAnchor == anchor else { return }
+        recordScrollAnchor(anchor)
+        if settings.seamlessScroll, anchor.chapter != vm.currentIndex {
+            vm.jump(to: anchor.chapter)
+        }
+    }
+
+    private func recordChapter(_ index: Int) {
+        guard let bookId = bookStore.currentBook?.id else { return }
+        settings.setLastChapter(index, for: bookId)
+        bookStore.updateProgress(for: bookId, chapter: index)
+    }
+
+    private func recordScrollAnchor(_ anchor: ScrollAnchor) {
+        guard let bookId = bookStore.currentBook?.id else { return }
+        settings.setLastChapter(anchor.chapter, for: bookId)
+        settings.setLastScrollBlock(anchor.block, for: bookId, chapter: anchor.chapter)
+        bookStore.updateProgress(for: bookId, chapter: anchor.chapter)
+    }
+
+    private func recordPagedPage(_ page: Int) {
+        pagedCurrentPage = page
+        guard let bookId = bookStore.currentBook?.id else { return }
+        settings.setLastChapter(vm.currentIndex, for: bookId)
+        settings.setLastPage(page, for: bookId, chapter: vm.currentIndex)
+        bookStore.updateProgress(for: bookId, chapter: vm.currentIndex)
+    }
+
+    private func saveCurrentPosition() {
+        guard let bookId = bookStore.currentBook?.id else { return }
+        if pageMode == "paged" {
+            settings.setLastChapter(vm.currentIndex, for: bookId)
+            settings.setLastPage(pagedCurrentPage, for: bookId, chapter: vm.currentIndex)
+            bookStore.updateProgress(for: bookId, chapter: vm.currentIndex)
+        } else if let anchor = visibleScrollAnchor, vm.chapters.indices.contains(anchor.chapter) {
+            recordScrollAnchor(anchor)
+        } else {
+            recordChapter(vm.currentIndex)
+        }
+    }
+
+    private func restoreReadingPosition(animated: Bool) {
+        guard vm.loadState == .loaded, vm.chapters.indices.contains(vm.currentIndex) else { return }
+        if pageMode == "paged" {
+            pagedTargetPage = pageTarget(for: vm.currentIndex, landing: .saved)
+        } else {
+            requestScroll(to: scrollAnchor(for: vm.currentIndex, landing: .saved), animated: animated)
+        }
+    }
 
     private var pagedSplitID: String {
         "\(vm.currentIndex)-\(settings.fontSize)-\(settings.lineSpacing)-\(Int(pageSize.width))-\(Int(pageSize.height))-\(pageMode)-\(nameFrom)-\(nameTo)"
@@ -409,10 +628,13 @@ struct ReaderView: View {
         let lineSpacing = settings.lineSpacing
         let inset = UIEdgeInsets(top: 56, left: 22, bottom: 32, right: 22)
         let chapterId = chapter.id
+        let currentIndex = vm.currentIndex
+        let prevCh = vm.chapters.indices.contains(currentIndex - 1) ? vm.chapters[currentIndex - 1] : nil
+        let nextCh = vm.chapters.indices.contains(currentIndex + 1) ? vm.chapters[currentIndex + 1] : nil
+        let sameChapter = chapterId == lastSplitChapterId
+        let requestedPage = sameChapter ? pagedCurrentPage : pagedTargetPage
         let chunk = await Task.detached(priority: .userInitiated) {
             let curr = PageSplitter.split(text, font: font, lineSpacing: lineSpacing, pageSize: size, contentInset: inset)
-            let prevCh = vm.chapters.indices.contains(vm.currentIndex - 1) ? vm.chapters[vm.currentIndex - 1] : nil
-            let nextCh = vm.chapters.indices.contains(vm.currentIndex + 1) ? vm.chapters[vm.currentIndex + 1] : nil
             var prev: [String] = []
             var next: [String] = []
             if let pc = prevCh {
@@ -424,12 +646,11 @@ struct ReaderView: View {
             return (curr, prevCh?.title, prev.last, nextCh?.title, next.first)
         }.value
         await MainActor.run {
-            if chapterId != lastSplitChapterId {
-                lastSplitChapterId = chapterId
-            } else {
-                pagedTargetPage = 0
-            }
-            if pagedTargetPage < 0 { pagedTargetPage = max(0, chunk.0.count - 1) }
+            lastSplitChapterId = chapterId
+            let maxPage = max(0, chunk.0.count - 1)
+            let targetPage = requestedPage < 0 ? maxPage : min(max(0, requestedPage), maxPage)
+            pagedTargetPage = targetPage
+            pagedCurrentPage = targetPage
             pagedPages = chunk.0
             prevChapterTitle = chunk.1 ?? ""
             prevLastPage = chunk.2
@@ -454,20 +675,53 @@ struct ReaderView: View {
     private func enterReader() async {
         systemBrightnessOnEnter = Double(UIScreen.main.brightness)
         guard let book = bookStore.currentBook else { return }
-        if vm.chapters.isEmpty { vm.loadBook(book, settings: settings) }
+        if vm.currentBookId != book.id || vm.chapters.isEmpty {
+            vm.loadBook(book, settings: settings)
+        }
         for _ in 0..<50 where vm.loadState == .loading {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
-        pagedTargetPage = 0
+        restoreReadingPosition(animated: false)
     }
 
     private func leaveReader() {
         hideTask?.cancel()
-        guard let bookId = bookStore.currentBook?.id else { return }
-        settings.setLastChapter(vm.currentIndex, for: bookId)
-        bookStore.updateProgress(for: bookId, chapter: vm.currentIndex)
+        saveCurrentPosition()
         if brightnessOverride != nil {
             UIScreen.main.brightness = CGFloat(systemBrightnessOnEnter)
+        }
+    }
+}
+
+// MARK: - 手势返回
+
+/// 隐藏导航栏后系统边缘右滑返回会失效，这里强制恢复
+/// `interactivePopGestureRecognizer`：仅当导航栈深度 > 1 时允许触发，
+/// 既支持阅读器右滑退出，又避免根视图（书架）被 pop。
+private struct SwipeBackEnabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = SwipeBackHost()
+        vc.coordinator = context.coordinator
+        return vc
+    }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        weak var nav: UINavigationController?
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            (nav?.viewControllers.count ?? 0) > 1
+        }
+    }
+
+    final class SwipeBackHost: UIViewController {
+        var coordinator: Coordinator?
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            guard let nav = navigationController, let coordinator else { return }
+            coordinator.nav = nav
+            nav.interactivePopGestureRecognizer?.isEnabled = true
+            nav.interactivePopGestureRecognizer?.delegate = coordinator
         }
     }
 }

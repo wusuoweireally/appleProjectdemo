@@ -39,5 +39,4 @@ enum ReadingTheme: String, CaseIterable, Identifiable {
     var secondaryText: Color { text.opacity(0.55) }
 
     var isDark: Bool { self == .night }
-    var colorScheme: ColorScheme? { isDark ? .dark : .light }
 }
