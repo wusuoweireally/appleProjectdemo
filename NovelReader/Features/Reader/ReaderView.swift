@@ -160,7 +160,7 @@ struct ReaderView: View {
                     scrollChapterBlocks(index: index, chapter: chapter)
                     chapterFooter
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
                 .padding(.top, 56)
                 .padding(.bottom, 120)
             }
@@ -190,7 +190,7 @@ struct ReaderView: View {
                         Color.clear.frame(height: 40)
                     }
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
                 .padding(.top, 56)
                 .padding(.bottom, 120)
             }
@@ -626,7 +626,7 @@ struct ReaderView: View {
         let text = replacedNames(chapter.content)
         let font = UIFont.systemFont(ofSize: settings.fontSize)
         let lineSpacing = settings.lineSpacing
-        let inset = UIEdgeInsets(top: 56, left: 22, bottom: 32, right: 22)
+        let inset = UIEdgeInsets(top: 56, left: 20, bottom: 32, right: 20)
         let chapterId = chapter.id
         let currentIndex = vm.currentIndex
         let prevCh = vm.chapters.indices.contains(currentIndex - 1) ? vm.chapters[currentIndex - 1] : nil
