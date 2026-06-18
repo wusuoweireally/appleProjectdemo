@@ -1,0 +1,21 @@
+# Xcode
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+build/
+
+# Swift
+.build/
+
+# Package
+Packages/
+Package.resolved
+*.xcodeproj/xcshareddata/
+*.xcodeproj/project.xcworkspace/
+
+# macOS
+.DS_Store
+Thumbs.db

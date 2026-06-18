@@ -1,0 +1,452 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3300000000000000000001 /* NovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000002 /* NovelReaderApp.swift */; };
+		3300000000000000000002 /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000003 /* Chapter.swift */; };
+		3300000000000000000003 /* ChapterParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000004 /* ChapterParser.swift */; };
+		3300000000000000000004 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000005 /* Color+Hex.swift */; };
+		3300000000000000000005 /* ReadingTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000006 /* ReadingTheme.swift */; };
+		3300000000000000000006 /* ReaderSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000007 /* ReaderSettings.swift */; };
+		3300000000000000000007 /* ReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000008 /* ReaderViewModel.swift */; };
+		3300000000000000000008 /* BookShelfView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000009 /* BookShelfView.swift */; };
+		3300000000000000000009 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000A /* ExploreView.swift */; };
+		330000000000000000000A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000B /* ProfileView.swift */; };
+		330000000000000000000B /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000C /* ReaderView.swift */; };
+		330000000000000000000C /* ReaderCatalogSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000D /* ReaderCatalogSheet.swift */; };
+		330000000000000000000D /* ReaderSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000E /* ReaderSettingsSheet.swift */; };
+		330000000000000000000E /* novel.txt in Resources */ = {isa = PBXBuildFile; fileRef = 220000000000000000000F /* novel.txt */; };
+		330000000000000000000F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000010 /* Assets.xcassets */; };
+		3300000000000000000010 /* PageSplitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000011 /* PageSplitter.swift */; };
+		3300000000000000000011 /* PagedReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000012 /* PagedReaderView.swift */; };
+		3300000000000000000012 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000013 /* Book.swift */; };
+		3300000000000000000013 /* TextEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000014 /* TextEncoding.swift */; };
+		3300000000000000000014 /* BookStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2200000000000000000015 /* BookStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2200000000000000000001 /* NovelReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NovelReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2200000000000000000002 /* NovelReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovelReaderApp.swift; sourceTree = "<group>"; };
+		2200000000000000000003 /* Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chapter.swift; sourceTree = "<group>"; };
+		2200000000000000000004 /* ChapterParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterParser.swift; sourceTree = "<group>"; };
+		2200000000000000000005 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		2200000000000000000006 /* ReadingTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingTheme.swift; sourceTree = "<group>"; };
+		2200000000000000000007 /* ReaderSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettings.swift; sourceTree = "<group>"; };
+		2200000000000000000008 /* ReaderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViewModel.swift; sourceTree = "<group>"; };
+		2200000000000000000009 /* BookShelfView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookShelfView.swift; sourceTree = "<group>"; };
+		220000000000000000000A /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		220000000000000000000B /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		220000000000000000000C /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
+		220000000000000000000D /* ReaderCatalogSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderCatalogSheet.swift; sourceTree = "<group>"; };
+		220000000000000000000E /* ReaderSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsSheet.swift; sourceTree = "<group>"; };
+		220000000000000000000F /* novel.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = novel.txt; sourceTree = "<group>"; };
+		2200000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2200000000000000000011 /* PageSplitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageSplitter.swift; sourceTree = "<group>"; };
+		2200000000000000000012 /* PagedReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagedReaderView.swift; sourceTree = "<group>"; };
+		2200000000000000000013 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		2200000000000000000014 /* TextEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextEncoding.swift; sourceTree = "<group>"; };
+		2200000000000000000015 /* BookStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookStore.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		110000000000000000000E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1100000000000000000003 = {
+			isa = PBXGroup;
+			children = (
+				1100000000000000000005 /* NovelReader */,
+				1100000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1100000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000001 /* NovelReader.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1100000000000000000005 /* NovelReader */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000002 /* NovelReaderApp.swift */,
+				1100000000000000000006 /* Models */,
+				1100000000000000000007 /* Theme */,
+				1100000000000000000008 /* State */,
+				1100000000000000000009 /* Features */,
+				110000000000000000000C /* Resources */,
+				1100000000000000000010 /* Utils */,
+			);
+			path = NovelReader;
+			sourceTree = "<group>";
+		};
+		1100000000000000000006 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000003 /* Chapter.swift */,
+				2200000000000000000004 /* ChapterParser.swift */,
+				2200000000000000000013 /* Book.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		1100000000000000000007 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000005 /* Color+Hex.swift */,
+				2200000000000000000006 /* ReadingTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		1100000000000000000010 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000014 /* TextEncoding.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		1100000000000000000008 /* State */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000007 /* ReaderSettings.swift */,
+				2200000000000000000008 /* ReaderViewModel.swift */,
+				2200000000000000000015 /* BookStore.swift */,
+			);
+			path = State;
+			sourceTree = "<group>";
+		};
+		1100000000000000000009 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				110000000000000000000A /* Shelf */,
+				110000000000000000000B /* Reader */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		110000000000000000000A /* Shelf */ = {
+			isa = PBXGroup;
+			children = (
+				2200000000000000000009 /* BookShelfView.swift */,
+				220000000000000000000A /* ExploreView.swift */,
+				220000000000000000000B /* ProfileView.swift */,
+			);
+			path = Shelf;
+			sourceTree = "<group>";
+		};
+		110000000000000000000B /* Reader */ = {
+			isa = PBXGroup;
+			children = (
+				220000000000000000000C /* ReaderView.swift */,
+				220000000000000000000D /* ReaderCatalogSheet.swift */,
+				220000000000000000000E /* ReaderSettingsSheet.swift */,
+				2200000000000000000011 /* PageSplitter.swift */,
+				2200000000000000000012 /* PagedReaderView.swift */,
+			);
+			path = Reader;
+			sourceTree = "<group>";
+		};
+		110000000000000000000C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				220000000000000000000F /* novel.txt */,
+				2200000000000000000010 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1100000000000000000002 /* NovelReader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1100000000000000000101 /* Build configuration list for PBXNativeTarget "NovelReader" */;
+			buildPhases = (
+				110000000000000000000D /* Sources */,
+				110000000000000000000E /* Frameworks */,
+				110000000000000000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NovelReader;
+			productName = NovelReader;
+			productReference = 2200000000000000000001 /* NovelReader.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1100000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					1100000000000000000002 = {
+						CreatedOnToolsVersion = 1500;
+					};
+				};
+			};
+			buildConfigurationList = 1100000000000000000100 /* Build configuration list for PBXProject "NovelReader" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				"zh-Hans",
+				en,
+				Base,
+			);
+			mainGroup = 1100000000000000000003;
+			productRefGroup = 1100000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1100000000000000000002 /* NovelReader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		110000000000000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				330000000000000000000E /* novel.txt in Resources */,
+				330000000000000000000F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		110000000000000000000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3300000000000000000001 /* NovelReaderApp.swift in Sources */,
+				3300000000000000000002 /* Chapter.swift in Sources */,
+				3300000000000000000003 /* ChapterParser.swift in Sources */,
+				3300000000000000000004 /* Color+Hex.swift in Sources */,
+				3300000000000000000005 /* ReadingTheme.swift in Sources */,
+				3300000000000000000006 /* ReaderSettings.swift in Sources */,
+				3300000000000000000007 /* ReaderViewModel.swift in Sources */,
+				3300000000000000000008 /* BookShelfView.swift in Sources */,
+				3300000000000000000009 /* ExploreView.swift in Sources */,
+				330000000000000000000A /* ProfileView.swift in Sources */,
+				330000000000000000000B /* ReaderView.swift in Sources */,
+				330000000000000000000C /* ReaderCatalogSheet.swift in Sources */,
+				330000000000000000000D /* ReaderSettingsSheet.swift in Sources */,
+				3300000000000000000010 /* PageSplitter.swift in Sources */,
+				3300000000000000000011 /* PagedReaderView.swift in Sources */,
+				3300000000000000000012 /* Book.swift in Sources */,
+				3300000000000000000013 /* TextEncoding.swift in Sources */,
+				3300000000000000000014 /* BookStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4400000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = N9MNGZNT3J;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_STRICT_OBJC_MSG_SEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		4400000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = N9MNGZNT3J;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		4400000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "番茄阅读";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.demo.novelreader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4400000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "番茄阅读";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.demo.novelreader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1100000000000000000100 /* Build configuration list for PBXProject "NovelReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4400000000000000000001 /* Debug */,
+				4400000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1100000000000000000101 /* Build configuration list for PBXNativeTarget "NovelReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4400000000000000000003 /* Debug */,
+				4400000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1100000000000000000001 /* Project object */;
+}
